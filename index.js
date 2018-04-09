@@ -191,6 +191,12 @@ module.exports = {
       publishAssetFile(path.resolve(__dirname, './prism-ebook.css'), book);
     },
 
+    'page:before': function (page) {
+      // Move code block attributes to a marker inside the respective code block.
+      page.content = page.content.replace(/```(.*)?\{(.+?)\}(\s*)/g, '```$1$3#MDATTR#{$2}');
+      return page;
+    },
+
     page: function (page) {
       var startTime = process.hrtime();
       blocks = {};
@@ -213,6 +219,24 @@ module.exports = {
         if (!code) return;
         // From here on, only PRE > CODE blocks are processed.
         changed = true;
+
+        // Check for attribute markers and process them.
+        var m = code.innerHTML.match(/#MDATTR#\{(.+?)\}([\s\S]*)/);
+        if (m) {
+          // Remove marker.
+          code.innerHTML = m[2];
+
+          // Apply CSS class (if set).
+          var m2;
+          if ((m2 = m[1].match(/^\.(\S+)/)) !== null) preElement.className = m2[1].replace(/\./g, ' ');
+
+          // Apply attributes (if any).
+          var attrExp = /(\S+?)="(.*?)"/g;
+          while ((m2 = attrExp.exec(m[1])) !== null) {
+            preElement.setAttribute(m2[1], m2[2]);
+          }
+        };
+
         if (cssClasses) preElement.className = preElement.className ? preElement.className + ' ' + cssClasses : cssClasses;
 
         var _class = code.getAttribute('class');
@@ -398,11 +422,14 @@ function loadPlugin (srcPath, book) {
   try {
     require(srcPath);
   } catch (e) {
+    var msg = '';
     if (e.code === 'MODULE_NOT_FOUND') {
       var altPath = book.resolve(srcPath);
       if (fs.existsSync(altPath)) return loadPlugin(altPath, book);
+      msg = 'file not found';
     }
-    warn('Can\'t load Prism plugin "' + srcPath + '"; file not found');
+    else msg = e.message;
+    warn('Can\'t load Prism plugin "' + srcPath + '"; ' + msg);
     return false;
   }
   return true;
