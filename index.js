@@ -141,10 +141,21 @@ module.exports = {
       var book = this;
       assets = [];
 
-      // Load Prism plugins
+      // Setup emulated browser environment
       global.Prism = Prism;
       global.self = global;
       global.document = JSDOM();
+      global.window = global;
+      global.getComputedStyle = function (elt, pseudoElt) {
+        return {
+          lineHeight: getConfig(book, 'pluginsConfig.prism.lineHeight', 17.85)
+        };
+      };
+      global.location = {
+        hash: '#'
+      };
+
+      // Load Prism plugins
       var plugins = getConfig(book, 'pluginsConfig.prism.plugins', []);
       plugins.forEach(function (plugin) {
         // Custom plugin
@@ -192,8 +203,10 @@ module.exports = {
     },
 
     'page:before': function (page) {
-      // Move code block attributes to a marker inside the respective code block.
-      page.content = page.content.replace(/```(.*)?\{(.+?)\}(\s*)/g, '```$1$3#MDATTR#{$2}');
+      if (getConfig(this, 'pluginsConfig.prism.codeBlockExtSyntax')) {
+        // Move code block attributes to a marker inside the respective code block.
+        page.content = page.content.replace(/```(.*)?\{(.+?)\}(\s*)/g, '```$1$3#MDATTR#{$2}');
+      }
       return page;
     },
 

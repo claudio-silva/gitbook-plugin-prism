@@ -35,6 +35,8 @@ Override the default syntax highlighting styles.
 
 The CSS file path may be relative to the `node_modules` folder or to the book's source folder (if you want to provide a custom style that is bundled with the book's files instead of being provided by an installable module).
 
+##### Example:
+
 ```json
 "pluginsConfig": {
   "prism": {
@@ -45,6 +47,8 @@ The CSS file path may be relative to the `node_modules` folder or to the book's 
 
 ### `lang`
 Support non-standard syntax prefixes by aliasing existing prefixes.
+
+##### Example:
 
 ```json
 "pluginsConfig": {
@@ -58,6 +62,8 @@ Support non-standard syntax prefixes by aliasing existing prefixes.
 
 ### `ignore`
 Due to other plugins using code block notion to denote other functionality, you can ignore certain langs
+
+##### Example:
 
 ```json
 "pluginsConfig": {
@@ -75,6 +81,8 @@ Appends a space-separated list of CSS classes to each fenced code block (those w
 
 This is meant to be used with some plugins that require a specific CSS class to be applied to the PRE element, in order for the plugin to be activated on that block.
 
+##### Example:
+
 ```json
 "pluginsConfig": {
   "prism": {
@@ -83,20 +91,84 @@ This is meant to be used with some plugins that require a specific CSS class to 
 }
 ```
 
+### `codeBlockExtSyntax`
+If `true`, enables an extended Markdown syntax for fenced code blocks, which allows you to set CSS classes and HTML attributes on the respective HTML `<pre>` elements.
+
+The default value is `false`.
+
+##### Example:
+
+```json
+"pluginsConfig": {
+  "prism": {
+    "codeBlockExtSyntax": true
+  }
+}
+```
+
+Some Prism plugins require this feature to be enabled, because they are configured view CSS classes or HTML attributes.
+
+#### Extended Mardown syntax for fenced code blocks
+
+~~~html
+```language{.class1.class2[...].classN attr1="value1" [...] attrN="valueN"}
+  source code
+```
+~~~
+
+The syntax definition above means that you may:
+
+* optionally specify an arbitrary number of CSS classes;
+* optionally specify an arbitrary number of HTML attributes.
+
+The `[...]` represents a repetition of the previous element.
+
+Note that attribute values **must** be double quoted.
+
+`language` is the name of the programming language (ex: `javascript`) and it may be ommited.
+
+##### Example of a fenced code block that uses the `line-highlight` and `line-numbers` plugins
+
+~~~
+```php{.line-numbers data-line="3,5-8"}
+use Components\Component;
+
+class HelloWorld extends Component
+{
+  protected function render ()
+  {
+    echo "Hello World!";
+  }
+}
+```
+~~~
+
+### `plugins`
+An array of strings containing a list of names of Prism plugins to load.
+
+Each element of the array may be either:
+
+1. a string with the name of one of the built-in Prism plugins;
+   > ex: "line-numbers"
+2. an array of CSS and/or JS files for loading a 3rd party  or custom plugin.
+   > Each file path may be relative to `node_modules` or to the book's source folder.
+
+
+##### Example:
+
+See the section below titled "Prism Plugins".
+
 ## Prism Plugins
 
-You may specify a list of Prism plugins on the `pluginsConfig.prism.plugin` configuration property on `book.json`.
+You may specify a list of Prism plugins on the `pluginsConfig.prism.plugins` configuration property on `book.json`.
 
-That property should be an array where each element may be either:
-
-1. a string with the plugin name (ex: "line-numbers");
-2. an array of CSS and/or JS files; each file path may be relative to `node_modules` or to the book's source folder.
+> See the explanation of the `plugins` option above.
 
 #### The simplest case
 
 In this basic example, we're loading the `line-numbers` Prism plugin.
 
-###### book.json
+##### book.json
 
 ```json
 {
@@ -121,7 +193,7 @@ In this example, we're loading:
 2. a custom syntax theme from the `prism-ASH` GitBook plugin,
 3. a custom Prism plugin embedded on the book itself, on the `src` folder, comprised of a CSS and a JS file.
 
-###### book.json
+##### book.json
 
 ```json
 {
@@ -135,7 +207,79 @@ In this example, we're loading:
     }
   }
 }
-``` 
+```
+
+### Supported Prism plugins
+
+These plugins were tested are are known to work correctly:
+
+1. line-numbers
+2. show-invisibles
+
+> TODO: test all other Prism built-in plugins.
+>
+> If you have feedback on this matter (either success or insuccess with specific plugins), please open an issue on GitHub.
+
+### Unsupported Prism plugins
+
+Unfortunately, some Prism plugins were just not designed for use in an environment that is not a web browser and make use of browser features that are not easily emulated.
+
+An example of such a plugin is the `line-highlight` plugin. It requires a browser for computing the line height, in pixels, of each source code line.
+
+We cannot emulate that on Node.js, when the book is being built (it would require a true CSS rendering engine), so the computed line height is always a fixed, pre-set value, and the highlights will not display correctly.
+
+There are three workarounds for this problem:
+
+1. Use an alternative plugin, installed via **npm**, that is compatible.
+2. Copy the unsupported plugin to your book and modify it to make it compatbile.
+3. Create your own plugin and either include it on your book or publish it on **npm** and install it.
+
+> To load a custom plugin from files on your book, see the explanation of the `plugins` option above.
+
+#### The line-highlight plugin
+
+As a bonus, I've provided a workaround to make this plugin *sorta* work: the "secret" `lineHeight` configuration option.
+
+Place this option on `book.json` with the line height, in pixels, of your fenced code blocks. The default value is `17.85`.
+
+> Note: if the height is fractionary, you must set a fractionary value for this option, otherwise the highlights will not line up with the lines.
+
+##### book.json example
+
+```json
+{
+  "plugins": ["-highlight", "prism-ext"],
+
+  "pluginsConfig": {
+    "prism": {
+      "plugins": ["line-highlight"],
+      "lineHeight": 17.85
+    }
+  }
+}
+```
+
+##### Markdown example
+
+~~~
+```php{data-line="3,5-8" data-line-offset="0"}
+use Components\Component;
+
+class HelloWorld extends Component
+{
+  protected function render ()
+  {
+    echo "Hello World!";
+  }
+}
+```
+~~~
+
+Besides the `data-line` attribute on the code block, there is a `data-line-offset` attribute (not mentioned on the plugin's documentation) that you can use to shift up or down the highlights by a fixed amount of pixels.
+
+Unfortunately, all of this only works if the user doesn't increase or decrease the text size when reading the book. This is a limitation of the `line-highlight` plugin that **cannot be overcome**.
+
+> If anyone knows of an alternative plugin, or makes one, please let me know and I'll mention it here.
 
 ## Prism Themes
 
