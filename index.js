@@ -142,18 +142,22 @@ module.exports = {
       assets = [];
 
       // Setup emulated browser environment
-      global.Prism = Prism;
-      global.self = global;
-      global.document = JSDOM();
-      global.window = global;
-      global.getComputedStyle = function (elt, pseudoElt) {
+      function nop () {}
+
+      var window = global;
+      global.window = window;
+      window.Prism = Prism;
+      window.self = global;
+      window.document = JSDOM();
+      window.getComputedStyle = function (elt, pseudoElt) {
         return {
-          lineHeight: getConfig(book, 'pluginsConfig.prism.lineHeight', 17.85)
+          lineHeight: getConfig(book, 'pluginsConfig.prism.lineHeight', 17)
         };
       };
-      global.location = {
+      window.location = {
         hash: '#'
       };
+      window.addEventListener = nop;
 
       // Load Prism plugins
       var plugins = getConfig(book, 'pluginsConfig.prism.plugins', []);
@@ -241,7 +245,7 @@ module.exports = {
 
           // Apply CSS class (if set).
           var m2;
-          if ((m2 = m[1].match(/^\.(\S+)/)) !== null) preElement.className = m2[1].replace(/\./g, ' ');
+          if ((m2 = m[1].match(/^\.([^\s}]+)/)) !== null) preElement.className = m2[1].replace(/\./g, ' ');
 
           // Apply attributes (if any).
           var attrExp = /(\S+?)="(.*?)"/g;
