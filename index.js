@@ -162,8 +162,8 @@ module.exports = {
       // Load Prism plugins
       var plugins = getConfig(book, 'pluginsConfig.prism.plugins', []);
       plugins.forEach(function (plugin) {
-        // Custom plugin
         var files;
+        // Custom plugin
         if (typeof plugin === 'string') {
           files = PLUGIN_ASSETS[plugin];
           if (files) {
@@ -196,6 +196,8 @@ module.exports = {
             return;
           }
         }
+        // For compatibility between the line-highlight plugin and the line-numbers plugin
+        delete Prism.plugins.lineNumbers;
 
       });
 
