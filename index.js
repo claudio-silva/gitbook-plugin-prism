@@ -211,7 +211,7 @@ module.exports = {
     'page:before': function (page) {
       if (getConfig(this, 'pluginsConfig.prism.codeBlockExtSyntax')) {
         // Move code block attributes to a marker inside the respective code block.
-        page.content = page.content.replace(/```(.*)?\{(.+?)\}(\s*)/g, '```$1$3#MDATTR#{$2}');
+        page.content = page.content.replace(/(^|\r|\n)```(.*)?\{(.+?)\}(\s*)/g, '```$1$2$4#MDATTR#{$3}');
       }
       return page;
     },
