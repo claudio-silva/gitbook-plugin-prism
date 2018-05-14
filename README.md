@@ -27,8 +27,18 @@ Add the plugin to your `book.json`, and disable default GitBook code highlightin
 }
 ```
 
-## Options
+## Important
 
+Out-of-the-box, the prism-ext plugin **will not work as expected**, due to the default CSS styles of GitBook books.
+Some custom styles are needed to make it work correctly.
+
+See the demonstration project, which provides the required styles.  
+
+## Demonstration
+
+The easiest, fastest and simplest way to see this plugin working properly is to install the [gitbook-prism-ext-demo](https://github.com/claudio-silva/gitbook-prism-ext-demo), which is provided on a separate repository.
+
+## Options
 
 ### `theme`
 Override the default syntax highlighting styles.
